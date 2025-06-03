@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeMaster Pro - Modern Typing Test Website</title>
+    <meta name="description" content="Test your typing speed and accuracy with TypeMaster Pro. Multiple modes including beginner practice, speed challenges, accuracy tests, and Hindi typing. Track your progress and compete on the global leaderboard.">
+    <meta name="keywords" content="typing test, wpm test, typing speed, typing practice, typing game, keyboard skills">
+    
+    <!-- Open Graph tags -->
+    <meta property="og:title" content="TypeMaster Pro - Modern Typing Test Website">
+    <meta property="og:description" content="Test your typing speed and accuracy with multiple challenging modes. Track progress and compete globally.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourdomain.com">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌨️</text></svg>">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Critical CSS for fast loading */
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: hsl(210, 11%, 98%);
+            color: hsl(222, 84%, 5%);
+            line-height: 1.6;
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: hsl(210, 11%, 98%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid hsl(142, 71%, 45%);
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, hsl(222, 84%, 5%), hsl(142, 71%, 45%));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: hsl(222, 84%, 5%);
+                color: hsl(210, 40%, 98%);
+            }
+            .loading-screen {
+                background: hsl(222, 84%, 5%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading">
+        <div style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⌨️</div>
+            <h1 class="gradient-text" style="font-size: 2rem; font-weight: 700; margin-bottom: 1rem;">TypeMaster Pro</h1>
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 1rem; color: hsl(215, 16%, 47%);">Loading your typing experience...</p>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="root"></div>
+
+    <!-- React App Script -->
+    <script type="module">
+        // TypeMaster Pro - Modern Typing Test Application
+        
+        // Theme Management
+        class ThemeManager {
+            constructor() {
+                this.theme = localStorage.getItem('typemaster-theme') || 'light';
+                this.applyTheme();
+            }
+            
+            applyTheme() {
+                document.documentElement.classList.remove('light', 'dark');
+                if (this.theme === 'system') {
+                    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    document.documentElement.classList.add(systemTheme);
+                } else {
+                    document.documentElement.classList.add(this.theme);
+                }
+            }
+            
+            setTheme(newTheme) {
+                this.theme = newTheme;
+                localStorage.setItem('typemaster-theme', newTheme);
+                this.applyTheme();
+            }
+            
+            toggleTheme() {
+                this.setTheme(this.theme === 'light' ? 'dark' : 'light');
+            }
+        }
+
+        // Typing Test Data
+        const typingModes = [
+            {
+                id: "beginner",
+                title: "Beginner Practice",
+                description: "Perfect for newcomers. Start with simple words and basic typing fundamentals.",
+                icon: "🌱",
+                color: "green",
+                timeLimit: 300,
+                text: "cat dog run jump happy quick brown fox over lazy animal simple words practice typing skills learning basic fundamentals easy start begin new user friendly approach method technique development improvement"
+            },
+            {
+                id: "speed",
+                title: "Speed Challenge",
+                description: "Race against time! Focus on typing as fast as possible with common words.",
+                icon: "⚡",
+                color: "red",
+                timeLimit: 60,
+                text: "The quick brown fox jumps over the lazy dog. Speed is essential for modern typing. Challenge yourself to type faster while maintaining accuracy. Time management productivity efficiency workflow optimization performance enhancement rapid execution swift response immediate action quick reaction fast movement velocity acceleration tempo pace rhythm flow momentum drive energy power strength force intensity vigor vitality dynamism enthusiasm passion dedication commitment determination persistence resilience endurance stamina"
+            },
+            {
+                id: "accuracy",
+                title: "Accuracy Focused",
+                description: "Precision matters! Type carefully with complex words and punctuation.",
+                icon: "🎯",
+                color: "blue",
+                timeLimit: 180,
+                text: "Accuracy in typing requires careful attention to detail, proper finger placement, and consistent practice. Focus on correct letter placement rather than speed. Precision, meticulousness, exactness, correctness, faithfulness, fidelity, authenticity, reliability, dependability, consistency, stability, regularity, uniformity, conformity, compliance, adherence, observance, respect, regard, consideration, thoughtfulness, mindfulness, awareness, consciousness, alertness, vigilance, watchfulness, caution, care, diligence, thoroughness, comprehensiveness, completeness, wholeness, integrity, honesty, truthfulness, sincerity, genuineness."
+            },
+            {
+                id: "paragraph",
+                title: "Paragraph Mode",
+                description: "Type complete paragraphs with natural flow and proper punctuation.",
+                icon: "📄",
+                color: "purple",
+                timeLimit: 300,
+                text: "In the digital age, typing has become an essential skill for professionals and students alike. Whether you are writing emails, reports, or creative content, the ability to type quickly and accurately can significantly improve your productivity and communication effectiveness. Modern technology has transformed the way we interact with computers, making keyboard proficiency more important than ever before. From coding and programming to content creation and data entry, typing skills are fundamental to success in virtually every field. The development of muscle memory through regular practice enables typists to achieve remarkable speeds while maintaining high accuracy rates. Professional typists often exceed 100 words per minute, demonstrating the potential for human dexterity and coordination when properly trained."
+            },
+            {
+                id: "hindi",
+                title: "Hindi Typing",
+                description: "Practice Hindi typing with Devanagari script and common phrases.",
+                icon: "🇮🇳",
+                color: "orange",
+                timeLimit: 180,
+                text: "नमस्ते! यह हिंदी टाइपिंग का अभ्यास है। देवनागरी लिपि में टाइप करना एक महत्वपूर्ण कौशल है। भारत में हिंदी भाषा का व्यापक उपयोग होता है। आज के डिजिटल युग में हिंदी टाइपिंग की आवश्यकता बढ़ रही है। सरकारी कार्यालयों, शिक्षण संस्थानों, और व्यावसायिक क्षेत्रों में हिंदी टाइपिंग का उपयोग होता है। नियमित अभ्यास से आप तेजी से और सटीक रूप से हिंदी टाइप कर सकते हैं।"
+            }
+        ];
+
+        // Application State
+        class AppState {
+            constructor() {
+                this.currentView = 'modes';
+                this.selectedMode = null;
+                this.showResults = false;
+                this.testResults = null;
+                this.leaderboard = [
+                    { username: "TypeMaster_Pro", mode: "speed", wpm: 127, accuracy: 98.5 },
+                    { username: "SpeedDemon_99", mode: "speed", wpm: 118, accuracy: 97.2 },
+                    { username: "AccuracyKing", mode: "accuracy", wpm: 95, accuracy: 99.8 },
+                    { username: "FlashTyper", mode: "speed", wpm: 115, accuracy: 96.1 },
+                    { username: "PerfectTypist", mode: "accuracy", wpm: 88, accuracy: 99.5 }
+                ];
+                this.listeners = [];
+            }
+            
+            subscribe(listener) {
+                this.listeners.push(listener);
+                return () => {
+                    const index = this.listeners.indexOf(listener);
+                    if (index > -1) this.listeners.splice(index, 1);
+                };
+            }
+            
+            setState(newState) {
+                Object.assign(this, newState);
+                this.listeners.forEach(listener => listener());
+            }
+        }
+
+        // Typing Test Logic
+        class TypingTest {
+            constructor(targetText, timeLimit) {
+                this.targetText = targetText;
+                this.timeLimit = timeLimit;
+                this.userInput = '';
+                this.startTime = null;
+                this.isActive = false;
+                this.isCompleted = false;
+                this.interval = null;
+                this.stats = {
+                    wpm: 0,
+                    accuracy: 100,
+                    mistakes: 0,
+                    timeRemaining: timeLimit,
+                    progress: 0
+                };
+                this.listeners = [];
+            }
+            
+            subscribe(listener) {
+                this.listeners.push(listener);
+                return () => {
+                    const index = this.listeners.indexOf(listener);
+                    if (index > -1) this.listeners.splice(index, 1);
+                };
+            }
+            
+            notifyListeners() {
+                this.listeners.forEach(listener => listener());
+            }
+            
+            start() {
+                this.startTime = Date.now();
+                this.isActive = true;
+                this.interval = setInterval(() => this.calculateStats(), 100);
+                this.notifyListeners();
+            }
+            
+            updateInput(input) {
+                this.userInput = input;
+                this.calculateStats();
+                this.notifyListeners();
+            }
+            
+            calculateStats() {
+                if (!this.startTime) return;
+                
+                const currentTime = Date.now();
+                const elapsedMinutes = (currentTime - this.startTime) / 1000 / 60;
+                
+                // Calculate WPM
+                const wordsTyped = this.userInput.trim().split(/\s+/).length;
+                this.stats.wpm = elapsedMinutes > 0 ? Math.round(wordsTyped / elapsedMinutes) : 0;
+                
+                // Calculate accuracy and mistakes
+                let correct = 0;
+                let mistakes = 0;
+                
+                for (let i = 0; i < Math.min(this.userInput.length, this.targetText.length); i++) {
+                    if (this.userInput[i] === this.targetText[i]) {
+                        correct++;
+                    } else {
+                        mistakes++;
+                    }
+                }
+                
+                this.stats.accuracy = this.userInput.length > 0 ? Math.round((correct / this.userInput.length) * 100) : 100;
+                this.stats.mistakes = mistakes;
+                this.stats.progress = Math.min(100, (this.userInput.length / this.targetText.length) * 100);
+                
+                // Calculate time remaining
+                const elapsedSeconds = (currentTime - this.startTime) / 1000;
+                this.stats.timeRemaining = Math.max(0, this.timeLimit - elapsedSeconds);
+                
+                // Check if test should end
+                if (this.stats.timeRemaining <= 0 || this.userInput.length >= this.targetText.length) {
+                    this.end();
+                }
+            }
+            
+            end() {
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+                this.isActive = false;
+                this.isCompleted = true;
+                this.notifyListeners();
+            }
+            
+            reset() {
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+                this.startTime = null;
+                this.userInput = '';
+                this.isActive = false;
+                this.isCompleted = false;
+                this.stats = {
+                    wpm: 0,
+                    accuracy: 100,
+                    mistakes: 0,
+                    timeRemaining: this.timeLimit,
+                    progress: 0
+                };
+                this.notifyListeners();
+            }
+        }
+
+        // UI Rendering
+        class UIRenderer {
+            constructor(appState, themeManager) {
+                this.appState = appState;
+                this.themeManager = themeManager;
+                this.typingTest = null;
+                this.root = document.getElementById('root');
+                
+                // Subscribe to state changes
+                this.appState.subscribe(() => this.render());
+            }
+            
+            render() {
+                this.root.innerHTML = this.getCurrentView();
+                this.attachEventListeners();
+            }
+            
+            getCurrentView() {
+                switch (this.appState.currentView) {
+                    case 'modes':
+                        return this.renderModeSelection();
+                    case 'typing':
+                        return this.renderTypingTest();
+                    case 'leaderboard':
+                        return this.renderLeaderboard();
+                    default:
+                        return this.renderModeSelection();
+                }
+            }
+            
+            renderModeSelection() {
+                return `
+                    <div class="min-h-screen bg-background">
+                        <!-- Header -->
+                        <header class="bg-card shadow-sm border-b sticky top-0 z-50" style="background: hsl(var(--card, 0 0% 100%)); border-bottom: 1px solid hsl(var(--border, 214 32% 91%));">
+                            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                <div class="flex justify-between items-center h-16">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, hsl(142, 71%, 45%), hsl(142, 71%, 35%));">
+                                            <span class="text-primary-foreground text-xl">⌨️</span>
+                                        </div>
+                                        <h1 class="text-2xl font-bold gradient-text">TypeMaster Pro</h1>
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-4">
+                                        <button class="btn-ghost" onclick="app.showLeaderboard()">
+                                            🏆 Leaderboard
+                                        </button>
+                                        <button class="btn-ghost" onclick="app.themeManager.toggleTheme(); app.render()">
+                                            ${this.themeManager.theme === 'light' ? '🌙' : '☀️'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+
+                        <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                            <section class="animate-fade-in">
+                                <div class="text-center mb-8">
+                                    <h2 class="text-4xl font-bold mb-4 gradient-text">Choose Your Challenge</h2>
+                                    <p class="text-lg text-muted-foreground">Select a typing mode and put your skills to the test</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    ${typingModes.map(mode => `
+                                        <div class="card hover-card" onclick="app.selectMode('${mode.id}')">
+                                            <div class="card-header">
+                                                <div class="flex items-center mb-4">
+                                                    <div class="icon-container ${this.getColorClass(mode.color)}">
+                                                        <span class="text-xl">${mode.icon}</span>
+                                                    </div>
+                                                    <h3 class="card-title">${mode.title}</h3>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="card-content">
+                                                <p class="text-muted-foreground mb-4">${mode.description}</p>
+                                                <div class="flex items-center text-sm text-muted-foreground">
+                                                    <span>⏱️</span>
+                                                    <span class="ml-2">
+                                                        ${mode.timeLimit >= 60 
+                                                            ? `${Math.floor(mode.timeLimit / 60)} minutes`
+                                                            : `${mode.timeLimit} seconds`
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </section>
+                        </main>
+                    </div>
+                `;
+            }
+            
+            renderTypingTest() {
+                const mode = typingModes.find(m => m.id === this.appState.selectedMode);
+                if (!mode) return this.renderModeSelection();
+                
+                if (!this.typingTest) {
+                    this.typingTest = new TypingTest(mode.text, mode.timeLimit);
+                    this.typingTest.subscribe(() => {
+                        if (this.typingTest.isCompleted) {
+                            this.appState.setState({
+                                testResults: {
+                                    mode: mode.id,
+                                    wpm: this.typingTest.stats.wpm,
+                                    accuracy: this.typingTest.stats.accuracy,
+                                    mistakes: this.typingTest.stats.mistakes,
+                                    timeLimit: mode.timeLimit
+                                },
+                                showResults: true
+                            });
+                        }
+                        this.updateTypingStats();
+                    });
+                }
+                
+                return `
+                    <div class="min-h-screen bg-background">
+                        <header class="bg-card shadow-sm border-b">
+                            <div class="max-w-7xl mx-auto px-4 py-4">
+                                <button class="btn-outline" onclick="app.backToModes()">
+                                    ← Back to Modes
+                                </button>
+                            </div>
+                        </header>
+                        
+                        <main class="max-w-4xl mx-auto px-4 py-8">
+                            <div class="space-y-6">
+                                <!-- Test Header -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                            <div>
+                                                <h2 class="text-2xl font-bold flex items-center gap-2">
+                                                    <span class="text-2xl">${mode.icon}</span>
+                                                    ${mode.title}
+                                                </h2>
+                                                <p class="text-muted-foreground mt-1">${mode.description}</p>
+                                            </div>
+                                            
+                                            <!-- Real-time Stats -->
+                                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="typing-stats">
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-primary">${this.typingTest?.stats.wpm || 0}</div>
+                                                    <div class="text-xs text-muted-foreground">WPM</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-blue-500">${this.typingTest?.stats.accuracy || 100}%</div>
+                                                    <div class="text-xs text-muted-foreground">Accuracy</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-red-500">${this.typingTest?.stats.mistakes || 0}</div>
+                                                    <div class="text-xs text-muted-foreground">Mistakes</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-purple-500">${Math.ceil(this.typingTest?.stats.timeRemaining || mode.timeLimit)}</div>
+                                                    <div class="text-xs text-muted-foreground">Time (s)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-content">
+                                        <!-- Progress Bar -->
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm text-muted-foreground">Progress</span>
+                                                <span class="text-sm text-muted-foreground">${Math.round(this.typingTest?.stats.progress || 0)}%</span>
+                                            </div>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: ${this.typingTest?.stats.progress || 0}%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Typing Area -->
+                                <div class="card">
+                                    <div class="card-content p-8">
+                                        <!-- Text to Type -->
+                                        <div class="mb-6">
+                                            <div class="text-lg leading-relaxed typing-text p-6 bg-muted rounded-lg border-2 border-dashed min-h-[120px]" id="text-display">
+                                                ${this.renderTextWithHighlighting(mode.text)}
+                                            </div>
+                                        </div>
+
+                                        <!-- Input Area -->
+                                        <div class="relative">
+                                            <textarea 
+                                                id="typing-input"
+                                                placeholder="Start typing here..."
+                                                class="typing-input"
+                                                ${!this.typingTest?.isActive && !this.typingTest?.isCompleted ? 'disabled' : ''}
+                                                oninput="app.handleTypingInput(event)"
+                                            >${this.typingTest?.userInput || ''}</textarea>
+                                        </div>
+
+                                        <!-- Control Buttons -->
+                                        <div class="flex flex-wrap gap-4 mt-6">
+                                            ${!this.typingTest?.isActive && !this.typingTest?.isCompleted ? `
+                                                <button class="btn-primary" onclick="app.startTest()">
+                                                    ▶️ Start Test
+                                                </button>
+                                            ` : ''}
+                                            
+                                            <button class="btn-outline" onclick="app.resetTest()">
+                                                🔄 Reset
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </main>
+                        
+                        ${this.appState.showResults ? this.renderResultsModal() : ''}
+                    </div>
+                `;
+            }
+            
+            renderTextWithHighlighting(text) {
+                const userInput = this.typingTest?.userInput || '';
+                return text.split('').map((char, index) => {
+                    let className = "";
+                    
+                    if (index < userInput.length) {
+                        if (userInput[index] === char) {
+                            className = "correct-char";
+                        } else {
+                            className = "incorrect-char";
+                        }
+                    } else if (index === userInput.length && this.typingTest?.isActive) {
+                        className = "current-char";
+                    }
+                    
+                    return `<span class="${className}">${char}</span>`;
+                }).join('');
+            }
+            
+            renderResultsModal() {
+                const results = this.appState.testResults;
+                const resultMessage = this.getResultMessage(results.wpm, results.accuracy);
+                const badges = this.getBadges(results);
+                
+                return `
+                    <div class="modal-overlay" onclick="app.closeResults()">
+                        <div class="modal-content" onclick="event.stopPropagation()">
+                            <div class="text-center pb-6 border-b">
+                                <div class="text-6xl mb-4">${resultMessage.emoji}</div>
+                                <h3 class="text-3xl font-bold mb-2">${resultMessage.title}</h3>
+                                <p class="text-muted-foreground">${resultMessage.message}</p>
+                            </div>
+
+                            <div class="py-6">
+                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                    <div class="card text-center p-4">
+                                        <div class="text-3xl font-bold text-primary mb-2">${results.wpm}</div>
+                                        <div class="text-sm text-muted-foreground">Words Per Minute</div>
+                                    </div>
+                                    
+                                    <div class="card text-center p-4">
+                                        <div class="text-3xl font-bold text-blue-500 mb-2">${results.accuracy}%</div>
+                                        <div class="text-sm text-muted-foreground">Accuracy</div>
+                                    </div>
+                                    
+                                    <div class="card text-center p-4">
+                                        <div class="text-3xl font-bold text-red-500 mb-2">${results.mistakes}</div>
+                                        <div class="text-sm text-muted-foreground">Total Mistakes</div>
+                                    </div>
+                                    
+                                    <div class="card text-center p-4">
+                                        <div class="text-3xl font-bold text-purple-500 mb-2">${results.timeLimit}s</div>
+                                        <div class="text-sm text-muted-foreground">Time Limit</div>
+                                    </div>
+                                </div>
+
+                                ${badges.length > 0 ? `
+                                    <div class="mb-8">
+                                        <h4 class="text-xl font-semibold mb-4">Badges Earned</h4>
+                                        <div class="flex flex-wrap gap-3">
+                                            ${badges.map(badge => `
+                                                <div class="badge ${badge.color}">
+                                                    <span>${badge.icon}</span>
+                                                    <span>${badge.name}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+
+                                <div class="flex flex-wrap gap-4">
+                                    <button class="btn-primary flex-1" onclick="app.retryTest()">
+                                        🔄 Try Again
+                                    </button>
+                                    
+                                    <button class="btn-outline flex-1" onclick="app.shareScore()">
+                                        📤 Share Score
+                                    </button>
+                                    
+                                    <button class="btn-outline" onclick="app.closeResults()">
+                                        ✖️ Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            renderLeaderboard() {
+                return `
+                    <div class="min-h-screen bg-background">
+                        <header class="bg-card shadow-sm border-b">
+                            <div class="max-w-7xl mx-auto px-4 py-4">
+                                <button class="btn-outline" onclick="app.backToModes()">
+                                    ← Back
+                                </button>
+                            </div>
+                        </header>
+                        
+                        <main class="max-w-4xl mx-auto px-4 py-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2 class="text-2xl font-bold flex items-center gap-2">
+                                        🏆 Global Leaderboard
+                                    </h2>
+                                </div>
+                                
+                                <div class="card-content">
+                                    <div class="space-y-3">
+                                        ${this.appState.leaderboard.map((entry, index) => {
+                                            const rank = index + 1;
+                                            return `
+                                                <div class="flex items-center justify-between p-4 bg-muted rounded-lg">
+                                                    <div class="flex items-center space-x-4">
+                                                        <div class="rank-badge rank-${rank}">
+                                                            ${rank <= 3 ? (rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉') : rank}
+                                                        </div>
+                                                        <div>
+                                                            <div class="font-semibold">${entry.username}</div>
+                                                            <div class="text-sm text-muted-foreground capitalize">
+                                                                ${entry.mode.replace("-", " ")} Challenge
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <div class="font-bold text-primary">${entry.wpm} WPM</div>
+                                                        <div class="text-sm text-muted-foreground">
+                                                            ${entry.accuracy.toFixed(1)}% accuracy
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </main>
+                    </div>
+                `;
+            }
+            
+            getColorClass(color) {
+                const colorMap = {
+                    green: "bg-green-100 text-green-600",
+                    red: "bg-red-100 text-red-600",
+                    blue: "bg-blue-100 text-blue-600",
+                    purple: "bg-purple-100 text-purple-600",
+                    orange: "bg-orange-100 text-orange-600",
+                    gray: "bg-gray-100 text-gray-600"
+                };
+                return colorMap[color] || "bg-gray-100 text-gray-600";
+            }
+            
+            getResultMessage(wpm, accuracy) {
+                if (wpm >= 80 && accuracy >= 95) {
+                    return { emoji: "🔥", title: "Outstanding!", message: "You're typing like a professional!" };
+                } else if (wpm >= 60 && accuracy >= 90) {
+                    return { emoji: "⚡", title: "Excellent Work!", message: "Great speed and accuracy!" };
+                } else if (wpm >= 40 && accuracy >= 85) {
+                    return { emoji: "👍", title: "Good Job!", message: "You're making solid progress!" };
+                } else if (wpm >= 25 && accuracy >= 75) {
+                    return { emoji: "😐", title: "Keep Practicing!", message: "You're on the right track!" };
+                } else {
+                    return { emoji: "🐢", title: "Room for Improvement", message: "Practice makes perfect!" };
+                }
+            }
+            
+            getBadges(results) {
+                const badges = [];
+                
+                if (results.wpm >= 60) {
+                    badges.push({ name: "Speed Demon", icon: "🏃", color: "bg-yellow-100 text-yellow-800" });
+                }
+                
+                if (results.accuracy >= 95) {
+                    badges.push({ name: "Accuracy Master", icon: "🎯", color: "bg-blue-100 text-blue-800" });
+                }
+                
+                if (results.mistakes === 0) {
+                    badges.push({ name: "Perfect Typist", icon: "💎", color: "bg-purple-100 text-purple-800" });
+                }
+                
+                return badges;
+            }
+            
+            updateTypingStats() {
+                const statsElement = document.getElementById('typing-stats');
+                const textDisplay = document.getElementById('text-display');
+                
+                if (statsElement && this.typingTest) {
+                    statsElement.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-primary">${this.typingTest.stats.wpm}</div>
+                            <div class="text-xs text-muted-foreground">WPM</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-500">${this.typingTest.stats.accuracy}%</div>
+                            <div class="text-xs text-muted-foreground">Accuracy</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-red-500">${this.typingTest.stats.mistakes}</div>
+                            <div class="text-xs text-muted-foreground">Mistakes</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-purple-500">${Math.ceil(this.typingTest.stats.timeRemaining)}</div>
+                            <div class="text-xs text-muted-foreground">Time (s)</div>
+                        </div>
+                    `;
+                }
+                
+                if (textDisplay && this.typingTest) {
+                    const mode = typingModes.find(m => m.id === this.appState.selectedMode);
+                    textDisplay.innerHTML = this.renderTextWithHighlighting(mode.text);
+                }
+            }
+            
+            attachEventListeners() {
+                // Any additional event listeners can be attached here
+            }
+        }
+
+        // Application Controller
+        class App {
+            constructor() {
+                this.appState = new AppState();
+                this.themeManager = new ThemeManager();
+                this.renderer = new UIRenderer(this.appState, this.themeManager);
+                
+                // Expose methods to global scope for onclick handlers
+                window.app = this;
+            }
+            
+            init() {
+                // Hide loading screen
+                document.getElementById('loading').style.display = 'none';
+                
+                // Render initial view
+                this.renderer.render();
+            }
+            
+            selectMode(modeId) {
+                this.appState.setState({
+                    currentView: 'typing',
+                    selectedMode: modeId
+                });
+                this.renderer.typingTest = null; // Reset typing test
+            }
+            
+            backToModes() {
+                this.appState.setState({
+                    currentView: 'modes',
+                    selectedMode: null,
+                    showResults: false,
+                    testResults: null
+                });
+                this.renderer.typingTest = null;
+            }
+            
+            showLeaderboard() {
+                this.appState.setState({
+                    currentView: 'leaderboard'
+                });
+            }
+            
+            startTest() {
+                if (this.renderer.typingTest) {
+                    this.renderer.typingTest.start();
+                    document.getElementById('typing-input').focus();
+                }
+            }
+            
+            handleTypingInput(event) {
+                if (this.renderer.typingTest) {
+                    this.renderer.typingTest.updateInput(event.target.value);
+                    
+                    // Start test on first input
+                    if (!this.renderer.typingTest.isActive && !this.renderer.typingTest.isCompleted && event.target.value.length === 1) {
+                        this.renderer.typingTest.start();
+                    }
+                }
+            }
+            
+            resetTest() {
+                if (this.renderer.typingTest) {
+                    this.renderer.typingTest.reset();
+                    document.getElementById('typing-input').value = '';
+                    this.renderer.render();
+                }
+            }
+            
+            retryTest() {
+                this.appState.setState({
+                    showResults: false,
+                    testResults: null
+                });
+                this.resetTest();
+            }
+            
+            closeResults() {
+                this.appState.setState({
+                    showResults: false
+                });
+            }
+            
+            shareScore() {
+                const results = this.appState.testResults;
+                const text = `I just scored ${results.wpm} WPM with ${results.accuracy}% accuracy on TypeMaster Pro! 🔥`;
+                
+                if (navigator.share) {
+                    navigator.share({
+                        title: "TypeMaster Pro - My Typing Test Results",
+                        text: text,
+                        url: window.location.href,
+                    });
+                } else {
+                    navigator.clipboard.writeText(text + " " + window.location.href).then(() => {
+                        alert("Score copied to clipboard!");
+                    });
+                }
+            }
+            
+            render() {
+                this.renderer.render();
+            }
+        }
+
+        // Initialize application
+        const app = new App();
+        
+        // Start the app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => app.init());
+        } else {
+            app.init();
+        }
+    </script>
+
+    <!-- CSS Styles -->
+    <style>
+        /* CSS Variables for theming */
+        :root {
+            --background: 210 11% 98%;
+            --foreground: 222 84% 5%;
+            --muted: 210 11% 95%;
+            --muted-foreground: 215 16% 47%;
+            --card: 0 0% 100%;
+            --card-foreground: 222 84% 5%;
+            --border: 214 32% 91%;
+            --primary: 142 71% 45%;
+            --primary-foreground: 355 6% 15%;
+            --destructive: 0 84% 60%;
+            --radius: 0.5rem;
+        }
+
+        .dark {
+            --background: 222 84% 5%;
+            --foreground: 210 40% 98%;
+            --muted: 215 28% 17%;
+            --muted-foreground: 215 20% 65%;
+            --card: 222 84% 5%;
+            --card-foreground: 210 40% 98%;
+            --border: 215 28% 17%;
+            --primary: 142 71% 45%;
+            --primary-foreground: 355 6% 15%;
+            --destructive: 0 62% 30%;
+        }
+
+        /* Global styles */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Layout utilities */
+        .min-h-screen { min-height: 100vh; }
+        .max-w-4xl { max-width: 56rem; margin: 0 auto; }
+        .max-w-6xl { max-width: 72rem; margin: 0 auto; }
+        .max-w-7xl { max-width: 80rem; margin: 0 auto; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+        .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+        .p-4 { padding: 1rem; }
+        .p-6 { padding: 1.5rem; }
+        .p-8 { padding: 2rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .space-y-3 > * + * { margin-top: 0.75rem; }
+        .space-y-4 > * + * { margin-top: 1rem; }
+        .space-y-6 > * + * { margin-top: 1.5rem; }
+        .space-x-3 > * + * { margin-left: 0.75rem; }
+        .space-x-4 > * + * { margin-left: 1rem; }
+        .gap-4 { gap: 1rem; }
+        .gap-6 { gap: 1.5rem; }
+
+        /* Flexbox utilities */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .flex-wrap { flex-wrap: wrap; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .flex-1 { flex: 1; }
+
+        /* Grid utilities */
+        .grid { display: grid; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+        @media (min-width: 768px) {
+            .md\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (min-width: 1024px) {
+            .lg\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .lg\\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .lg\\:flex-row { flex-direction: row; }
+            .lg\\:items-center { align-items: center; }
+            .lg\\:justify-between { justify-content: space-between; }
+        }
+
+        /* Typography */
+        .text-xs { font-size: 0.75rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-2xl { font-size: 1.5rem; }
+        .text-3xl { font-size: 1.875rem; }
+        .text-4xl { font-size: 2.25rem; }
+        .text-6xl { font-size: 3.75rem; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .leading-relaxed { line-height: 1.625; }
+
+        /* Colors */
+        .text-primary { color: hsl(var(--primary)); }
+        .text-blue-500 { color: #3B82F6; }
+        .text-red-500 { color: #EF4444; }
+        .text-purple-500 { color: #8B5CF6; }
+        .text-green-600 { color: #16A34A; }
+        .text-orange-600 { color: #EA580C; }
+        .text-yellow-800 { color: #92400E; }
+        .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+        .bg-background { background-color: hsl(var(--background)); }
+        .bg-muted { background-color: hsl(var(--muted)); }
+        .bg-green-100 { background-color: #DCFCE7; }
+        .bg-red-100 { background-color: #FEE2E2; }
+        .bg-blue-100 { background-color: #DBEAFE; }
+        .bg-purple-100 { background-color: #EDE9FE; }
+        .bg-orange-100 { background-color: #FED7AA; }
+        .bg-yellow-100 { background-color: #FEF3C7; }
+
+        /* Card components */
+        .card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card-header {
+            padding: 1.5rem 1.5rem 0 1.5rem;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-left: 1rem;
+        }
+
+        .hover-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .hover-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
+            border-color: hsl(var(--primary));
+        }
+
+        /* Button components */
+        .btn-primary {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background: hsl(var(--primary) / 0.9);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 1px solid hsl(var(--border));
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline:hover {
+            background: hsl(var(--muted));
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-ghost:hover {
+            background: hsl(var(--muted));
+        }
+
+        /* Form components */
+        .typing-input {
+            width: 100%;
+            min-height: 8rem;
+            padding: 1rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.125rem;
+            resize: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .typing-input:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+            box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+        }
+
+        .typing-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            width: 100%;
+            height: 0.75rem;
+            background: hsl(var(--muted));
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: hsl(var(--primary));
+            transition: width 0.3s ease;
+        }
+
+        /* Typing text highlighting */
+        .typing-text {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .correct-char {
+            color: #16A34A;
+        }
+
+        .incorrect-char {
+            color: #DC2626;
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        .current-char {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        /* Icon container */
+        .icon-container {
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: hsl(var(--card));
+            border-radius: var(--radius);
+            max-width: 42rem;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Badges */
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Rank badges */
+        .rank-badge {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .rank-1 { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
+        .rank-2 { background: linear-gradient(135deg, #9CA3AF, #6B7280); }
+        .rank-3 { background: linear-gradient(135deg, #D97706, #92400E); }
+        .rank-badge:not(.rank-1):not(.rank-2):not(.rank-3) {
+            background: hsl(var(--muted));
+            color: hsl(var(--foreground));
+        }
+
+        /* Animations */
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sticky header */
+        .sticky {
+            position: sticky;
+        }
+
+        .top-0 {
+            top: 0;
+        }
+
+        .z-50 {
+            z-index: 50;
+        }
+
+        /* Border utilities */
+        .border-b {
+            border-bottom: 1px solid hsl(var(--border));
+        }
+
+        .border-2 {
+            border-width: 2px;
+        }
+
+        .border-dashed {
+            border-style: dashed;
+        }
+
+        .rounded-lg {
+            border-radius: var(--radius);
+        }
+
+        .rounded-full {
+            border-radius: 9999px;
+        }
+
+        /* Shadow utilities */
+        .shadow-sm {
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        /* Height utilities */
+        .h-16 { height: 4rem; }
+        .w-10 { width: 2.5rem; }
+        .h-10 { height: 2.5rem; }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, hsl(var(--foreground)), hsl(var(--primary)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 640px) {
+            .sm\\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        }
+
+        @media (min-width: 1024px) {
+            .lg\\:px-8 { padding-left: 2rem; padding-right: 2rem; }
+        }
+
+        /* Dark mode color adjustments */
+        .dark .text-green-600 { color: #22C55E; }
+        .dark .text-red-500 { color: #F87171; }
+        .dark .text-blue-500 { color: #60A5FA; }
+        .dark .text-purple-500 { color: #A78BFA; }
+        .dark .bg-green-100 { background-color: rgba(34, 197, 94, 0.1); }
+        .dark .bg-red-100 { background-color: rgba(239, 68, 68, 0.1); }
+        .dark .bg-blue-100 { background-color: rgba(59, 130, 246, 0.1); }
+        .dark .bg-purple-100 { background-color: rgba(139, 92, 246, 0.1); }
+        .dark .bg-orange-100 { background-color: rgba(249, 115, 22, 0.1); }
+        .dark .bg-yellow-100 { background-color: rgba(245, 158, 11, 0.1); }
+        .dark .text-yellow-800 { color: #FCD34D; }
+    </style>
+</body>
+</html>
